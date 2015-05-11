@@ -14,6 +14,7 @@
 		11811C1A1B0100B400E9F2FB /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 11811C191B0100B400E9F2FB /* Images.xcassets */; };
 		11811C1D1B0100B400E9F2FB /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 11811C1B1B0100B400E9F2FB /* LaunchScreen.xib */; };
 		11811C291B0100B500E9F2FB /* UnlockEverythingKitExampleTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 11811C281B0100B500E9F2FB /* UnlockEverythingKitExampleTests.m */; };
+		11811C391B0101DD00E9F2FB /* UnlockEverythingKit.m in Sources */ = {isa = PBXBuildFile; fileRef = 11811C381B0101DD00E9F2FB /* UnlockEverythingKit.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +41,8 @@
 		11811C221B0100B500E9F2FB /* UnlockEverythingKitExampleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnlockEverythingKitExampleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		11811C271B0100B500E9F2FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		11811C281B0100B500E9F2FB /* UnlockEverythingKitExampleTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = UnlockEverythingKitExampleTests.m; sourceTree = "<group>"; };
+		11811C371B0101DD00E9F2FB /* UnlockEverythingKit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnlockEverythingKit.h; sourceTree = "<group>"; };
+		11811C381B0101DD00E9F2FB /* UnlockEverythingKit.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UnlockEverythingKit.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -88,6 +91,7 @@
 				11811C161B0100B400E9F2FB /* Main.storyboard */,
 				11811C191B0100B400E9F2FB /* Images.xcassets */,
 				11811C1B1B0100B400E9F2FB /* LaunchScreen.xib */,
+				11811C361B0101DD00E9F2FB /* UnlockEverythingKit */,
 				11811C0C1B0100B400E9F2FB /* Supporting Files */,
 			);
 			path = UnlockEverythingKitExample;
@@ -118,6 +122,15 @@
 			);
 			name = "Supporting Files";
 			sourceTree = "<group>";
+		};
+		11811C361B0101DD00E9F2FB /* UnlockEverythingKit */ = {
+			isa = PBXGroup;
+			children = (
+				11811C371B0101DD00E9F2FB /* UnlockEverythingKit.h */,
+				11811C381B0101DD00E9F2FB /* UnlockEverythingKit.m */,
+			);
+			path = UnlockEverythingKit;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -220,6 +233,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				11811C151B0100B400E9F2FB /* ViewController.m in Sources */,
+				11811C391B0101DD00E9F2FB /* UnlockEverythingKit.m in Sources */,
 				11811C121B0100B400E9F2FB /* AppDelegate.m in Sources */,
 				11811C0F1B0100B400E9F2FB /* main.m in Sources */,
 			);
@@ -348,6 +362,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = UnlockEverythingKitExample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -358,6 +373,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				INFOPLIST_FILE = UnlockEverythingKitExample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
