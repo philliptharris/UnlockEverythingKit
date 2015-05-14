@@ -98,7 +98,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     if (matchingProduct) {
         
-        NSLog(@"🔓 | SKProductsRequest | ✅");
+        NSLog(@"🔓 | SKProductsRequest | ✅ | %@", kStoreKitProductIdentifier);
         
         self.product = matchingProduct;
         
@@ -171,7 +171,6 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     NSLog(@"🔓 | Restoring past purchases...");
     self.successfullyRestoredUnlockEverythingPurchase = NO;
     [[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
-    NSLog(@"asdf");
 }
 
 //===============================================

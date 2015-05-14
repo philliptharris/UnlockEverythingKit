@@ -47,11 +47,16 @@ extern NSString * const UnlockEverythingRestorePurchaseDidFailNotification;
 - (void)productInformationRequestDidSucceed;
 - (void)productInformationRequestDidFail;
 
+/// iOS will show an alert to the user, so you don't have to.
 - (void)paymentRequestDidSucceed;
+/// iOS does not show an alert for this event.
 - (void)paymentRequestDidFail;
+/// Not sure if iOS shows an alert for this event.
 - (void)paymentRequestWasDeferred;
 
+/// iOS does not show an alert for this event.
 - (void)restorePurchaseDidSucceed;
+/// iOS does not show an alert for this event.
 - (void)restorePurchaseDidFail;
 
 @end
