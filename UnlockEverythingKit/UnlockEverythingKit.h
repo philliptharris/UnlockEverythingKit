@@ -10,7 +10,7 @@
 
 @import StoreKit;
 
-@protocol UnlockEverythingDelegate;
+@protocol UnlockEverythingKitObserver;
 
 extern NSString * const UnlockEverythingProductInformationRequestDidSucceedNotification;
 extern NSString * const UnlockEverythingProductInformationRequestDidFailNotification;
@@ -24,11 +24,11 @@ extern NSString * const UnlockEverythingRestorePurchaseDidFailNotification;
 
 @interface UnlockEverythingKit : NSObject <SKPaymentTransactionObserver>
 
+@property (nonatomic, strong) NSString *storeKitProductIdentifier;
 @property (nonatomic, strong) SKProduct *product;
 @property (nonatomic, strong) NSString *formattedProductPrice;
 @property (nonatomic, assign) BOOL currentlyRequestingProductInformation;
 @property (nonatomic, assign) BOOL userHasUnlockedEverything;
-@property (nonatomic, weak) id <UnlockEverythingDelegate> delegate;
 
 + (instancetype)shared;
 
@@ -37,10 +37,13 @@ extern NSString * const UnlockEverythingRestorePurchaseDidFailNotification;
 - (void)restorePurchase;
 - (void)removeProofOfPurchaseForTestingPurposes;
 
+- (void)addObserver:(id <UnlockEverythingKitObserver>)observer;
+- (void)removeObserver:(id <UnlockEverythingKitObserver>)observer;
+
 @end
 
 
-@protocol UnlockEverythingDelegate <NSObject>
+@protocol UnlockEverythingKitObserver <NSObject>
 
 @optional
 

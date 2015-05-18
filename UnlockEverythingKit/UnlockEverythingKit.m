@@ -18,12 +18,13 @@ NSString * const UnlockEverythingPaymentRequestWasDeferredNotification =        
 NSString * const UnlockEverythingRestorePurchaseDidSucceedNotification =            @"UnlockEverythingRestorePurchaseDidSucceedNotification";
 NSString * const UnlockEverythingRestorePurchaseDidFailNotification =               @"UnlockEverythingRestorePurchaseDidFailNotification";
 
-static NSString * const kStoreKitProductIdentifier = @"com.philliptharris.huckleberryfinn.unlock";
 static NSString * const kKeychainPassword = @"UnlockEverything";
 
 @interface UnlockEverythingKit () <SKProductsRequestDelegate>
 
 @property (nonatomic, assign) BOOL successfullyRestoredUnlockEverythingPurchase;
+
+@property (nonatomic, strong) NSMutableSet *observers;
 
 @end
 
@@ -47,12 +48,17 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
 {
     self = [super init];
     if (self) {
-        
-        _userHasUnlockedEverything = [self hasTheUserUnlockedEverything];
-        
-        [self requestProductInformation];
+        _observers = [NSMutableSet set];
     }
     return self;
+}
+
+- (void)setStoreKitProductIdentifier:(NSString *)storeKitProductIdentifier {
+    _product = nil;
+    _formattedProductPrice = nil;
+    _storeKitProductIdentifier = storeKitProductIdentifier;
+    _userHasUnlockedEverything = [self hasTheUserUnlockedEverything];
+    [self requestProductInformation];
 }
 
 //===============================================
@@ -68,7 +74,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
         
         self.currentlyRequestingProductInformation = YES;
         
-        SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:[NSSet setWithObject:kStoreKitProductIdentifier]];
+        SKProductsRequest *request = [[SKProductsRequest alloc] initWithProductIdentifiers:[NSSet setWithObject:self.storeKitProductIdentifier]];
         request.delegate = self;
         [request start];
     }
@@ -76,8 +82,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
         
         NSLog(@"🔓 | User is not allowed to make payments");
         
-        if ([self.delegate respondsToSelector:@selector(productInformationRequestDidFail)]) {
-            [self.delegate productInformationRequestDidFail];
+        for (id <UnlockEverythingKitObserver> observer in self.observers) {
+            if ([observer respondsToSelector:@selector(productInformationRequestDidFail)]) {
+                [observer productInformationRequestDidFail];
+            }
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingProductInformationRequestDidFailNotification object:self userInfo:nil];
@@ -92,18 +100,20 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     self.currentlyRequestingProductInformation = NO;
     
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"productIdentifier LIKE %@", kStoreKitProductIdentifier];
+    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"productIdentifier LIKE %@", self.storeKitProductIdentifier];
     NSArray *results = [response.products filteredArrayUsingPredicate:predicate];
     SKProduct *matchingProduct = [results firstObject];
     
     if (matchingProduct) {
         
-        NSLog(@"🔓 | SKProductsRequest | ✅ | %@", kStoreKitProductIdentifier);
+        NSLog(@"🔓 | SKProductsRequest | ✅ | %@", self.storeKitProductIdentifier);
         
         self.product = matchingProduct;
         
-        if ([self.delegate respondsToSelector:@selector(productInformationRequestDidSucceed)]) {
-            [self.delegate productInformationRequestDidSucceed];
+        for (id <UnlockEverythingKitObserver> observer in self.observers) {
+            if ([observer respondsToSelector:@selector(productInformationRequestDidSucceed)]) {
+                [observer productInformationRequestDidSucceed];
+            }
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingProductInformationRequestDidSucceedNotification object:self userInfo:nil];
@@ -111,8 +121,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     else {
         NSLog(@"🔓 | SKProductsRequest | ❌");
         
-        if ([self.delegate respondsToSelector:@selector(productInformationRequestDidFail)]) {
-            [self.delegate productInformationRequestDidFail];
+        for (id <UnlockEverythingKitObserver> observer in self.observers) {
+            if ([observer respondsToSelector:@selector(productInformationRequestDidFail)]) {
+                [observer productInformationRequestDidFail];
+            }
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingProductInformationRequestDidFailNotification object:self userInfo:nil];
@@ -153,8 +165,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     if (!self.product) {
         
-        if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail:)]) {
-            [self.delegate paymentRequestDidFail:@"Could not load product from the store. Please try again later."];
+        for (id <UnlockEverythingKitObserver> observer in self.observers) {
+            if ([observer respondsToSelector:@selector(paymentRequestDidFail:)]) {
+                [observer paymentRequestDidFail:@"Could not load product from the store. Please try again later."];
+            }
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestDidFailNotification object:self userInfo:nil];
@@ -180,7 +194,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
 
 - (void)paymentQueue:(SKPaymentQueue *)queue updatedTransactions:(NSArray *)transactions {
     for (SKPaymentTransaction *transaction in transactions) {
-        if ([transaction.payment.productIdentifier isEqualToString:kStoreKitProductIdentifier]) {
+        if ([transaction.payment.productIdentifier isEqualToString:self.storeKitProductIdentifier]) {
             [self logTransactionStateOfTransaction:transaction];
             switch (transaction.transactionState) {
                 case SKPaymentTransactionStatePurchased:
@@ -217,8 +231,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     if (!self.successfullyRestoredUnlockEverythingPurchase) {
         
-        if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail:)]) {
-            [self.delegate restorePurchaseDidFail:@"There was no record of a previous purchase."];
+        for (id <UnlockEverythingKitObserver> observer in self.observers) {
+            if ([observer respondsToSelector:@selector(restorePurchaseDidFail:)]) {
+                [observer restorePurchaseDidFail:@"There was no record of a previous purchase."];
+            }
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingRestorePurchaseDidFailNotification object:self userInfo:nil];
@@ -234,8 +250,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     // If restore fails, will the updatedTransactions method with state SKPaymentTransactionStateFailed also be called (NO)
     //
     
-    if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail:)]) {
-        [self.delegate restorePurchaseDidFail:error.localizedDescription];
+    for (id <UnlockEverythingKitObserver> observer in self.observers) {
+        if ([observer respondsToSelector:@selector(restorePurchaseDidFail:)]) {
+            [observer restorePurchaseDidFail:error.localizedDescription];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingRestorePurchaseDidFailNotification object:self userInfo:nil];
@@ -272,8 +290,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     [self addProofOfPurchaseToKeychain];
     
-    if ([self.delegate respondsToSelector:@selector(paymentRequestDidSucceed)]) {
-        [self.delegate paymentRequestDidSucceed];
+    for (id <UnlockEverythingKitObserver> observer in self.observers) {
+        if ([observer respondsToSelector:@selector(paymentRequestDidSucceed)]) {
+            [observer paymentRequestDidSucceed];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestDidSucceedNotification object:self userInfo:nil];
@@ -283,8 +303,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     NSLog(@"🔓 | Failure Reason: %@", transaction.error.localizedDescription);
     
-    if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail:)]) {
-        [self.delegate paymentRequestDidFail:transaction.error.localizedDescription];
+    for (id <UnlockEverythingKitObserver> observer in self.observers) {
+        if ([observer respondsToSelector:@selector(paymentRequestDidFail:)]) {
+            [observer paymentRequestDidFail:transaction.error.localizedDescription];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestDidFailNotification object:self userInfo:nil];
@@ -296,8 +318,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     [self addProofOfPurchaseToKeychain];
     
-    if ([self.delegate respondsToSelector:@selector(restorePurchaseDidSucceed)]) {
-        [self.delegate restorePurchaseDidSucceed];
+    for (id <UnlockEverythingKitObserver> observer in self.observers) {
+        if ([observer respondsToSelector:@selector(restorePurchaseDidSucceed)]) {
+            [observer restorePurchaseDidSucceed];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingRestorePurchaseDidSucceedNotification object:self userInfo:nil];
@@ -308,8 +332,10 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
 
 - (void)handleTransactionDeferred:(SKPaymentTransaction *)transaction {
     
-    if ([self.delegate respondsToSelector:@selector(paymentRequestWasDeferred)]) {
-        [self.delegate paymentRequestWasDeferred];
+    for (id <UnlockEverythingKitObserver> observer in self.observers) {
+        if ([observer respondsToSelector:@selector(paymentRequestWasDeferred)]) {
+            [observer paymentRequestWasDeferred];
+        }
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestWasDeferredNotification object:self userInfo:nil];
@@ -324,7 +350,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     NSMutableDictionary *query = [NSMutableDictionary dictionary];
     [query setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
-    [query setObject:kStoreKitProductIdentifier forKey:(__bridge id)kSecAttrService];
+    [query setObject:self.storeKitProductIdentifier forKey:(__bridge id)kSecAttrService];
     [query setObject:(id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
     
     CFDictionaryRef result = NULL;
@@ -355,7 +381,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     
     [dict setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
-    [dict setObject:kStoreKitProductIdentifier forKey:(__bridge id)kSecAttrService];
+    [dict setObject:self.storeKitProductIdentifier forKey:(__bridge id)kSecAttrService];
     [dict setObject:[kKeychainPassword dataUsingEncoding:NSUTF8StringEncoding] forKey:(id)CFBridgingRelease(kSecValueData)];
     
     SecItemAdd((__bridge CFDictionaryRef)dict, NULL);
@@ -369,7 +395,7 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     NSMutableDictionary *query = [NSMutableDictionary dictionary];
     [query setObject:(__bridge id)kSecClassGenericPassword forKey:(__bridge id)kSecClass];
-    [query setObject:kStoreKitProductIdentifier forKey:(__bridge id)kSecAttrService];
+    [query setObject:self.storeKitProductIdentifier forKey:(__bridge id)kSecAttrService];
     [query setObject:(id)kCFBooleanTrue forKey:(__bridge id)kSecReturnData];
     
     SecItemDelete((__bridge CFDictionaryRef)(query));
@@ -377,6 +403,19 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     self.userHasUnlockedEverything = NO;
     
     NSLog(@"🔓.🔑 | Removed proof of purchase from Keychain");
+}
+
+//===============================================
+#pragma mark -
+#pragma mark Observers
+//===============================================
+
+- (void)addObserver:(id <UnlockEverythingKitObserver>)observer {
+    [self.observers addObject:observer];
+}
+
+- (void)removeObserver:(id <UnlockEverythingKitObserver>)observer {
+    [self.observers removeObject:observer];
 }
 
 @end
