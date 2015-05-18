@@ -153,8 +153,8 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     if (!self.product) {
         
-        if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail)]) {
-            [self.delegate paymentRequestDidFail];
+        if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail:)]) {
+            [self.delegate paymentRequestDidFail:@"Could not load product from the store. Please try again later."];
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestDidFailNotification object:self userInfo:nil];
@@ -217,8 +217,8 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     if (!self.successfullyRestoredUnlockEverythingPurchase) {
         
-        if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail)]) {
-            [self.delegate restorePurchaseDidFail];
+        if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail:)]) {
+            [self.delegate restorePurchaseDidFail:@"There was no record of a previous purchase."];
         }
         
         [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingRestorePurchaseDidFailNotification object:self userInfo:nil];
@@ -234,8 +234,8 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     // If restore fails, will the updatedTransactions method with state SKPaymentTransactionStateFailed also be called (NO)
     //
     
-    if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail)]) {
-        [self.delegate restorePurchaseDidFail];
+    if ([self.delegate respondsToSelector:@selector(restorePurchaseDidFail:)]) {
+        [self.delegate restorePurchaseDidFail:error.localizedDescription];
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingRestorePurchaseDidFailNotification object:self userInfo:nil];
@@ -283,8 +283,8 @@ static NSString * const kKeychainPassword = @"UnlockEverything";
     
     NSLog(@"🔓 | Failure Reason: %@", transaction.error.localizedDescription);
     
-    if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail)]) {
-        [self.delegate paymentRequestDidFail];
+    if ([self.delegate respondsToSelector:@selector(paymentRequestDidFail:)]) {
+        [self.delegate paymentRequestDidFail:transaction.error.localizedDescription];
     }
     
     [[NSNotificationCenter defaultCenter] postNotificationName:UnlockEverythingPaymentRequestDidFailNotification object:self userInfo:nil];
